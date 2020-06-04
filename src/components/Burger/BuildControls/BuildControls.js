@@ -15,6 +15,7 @@ const buildControls = props =>(
 	<p>Current Price : $<strong>{props.price.toFixed(2)}</strong></p>
 	{
 		controls.map(ctrl => {
+				//alert(ctrl.type);
 				return <BuildControl 
 					key={ctrl.label} 
 					label={ctrl.label}
