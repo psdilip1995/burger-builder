@@ -23,6 +23,9 @@ const authFail = (error) => {
 };
 
 export const logout = () => {
+	localStorage.removeItem('burger_token');
+	localStorage.removeItem('burger_expirationDate');
+	localStorage.removeItem('burger_userId');
 	return {
 		type: actionTypes.AUTH_LOGOUT
 	};
@@ -32,7 +35,7 @@ const checkAuthTimeout = expirationTime => {
 	return dispatch => {
 		setTimeout(()=>{
 			dispatch(logout());
-		}, expirationTime*500);
+		}, expirationTime*1000);
 	};
 };
 
@@ -58,11 +61,35 @@ export const auth = (email, password, isSignup) => {
 		axios.post(url, authData)
 			.then(response => {
 				console.log(response);
+				const expirationDate = new Date(new Date().getTime() + response.data.expiresIn*1000);
+				localStorage.setItem('burger_token',response.data.idToken);
+				localStorage.setItem('burger_expirationDate', expirationDate);
+				localStorage.setItem('burger_userId',response.data.localId);
 				dispatch(authSuccess(response.data.idToken, response.data.localId));
 				dispatch(checkAuthTimeout(response.data.expiresIn));
 			}).catch(error => {
 				console.log(error);
 				dispatch(authFail(error.response.data.error));
 			});
+	};
+};
+
+export const authCheckStatus = () => {
+	//alert(localStorage.getItem('burger_token'));
+	return dispatch => {
+		const token = localStorage.getItem('burger_token');
+		if(!token){
+			dispatch(logout());
+		}else{
+			const expirationDate = new Date(localStorage.getItem('burger_expirationDate'));
+			if(expirationDate > new Date()){
+				const userId = localStorage.getItem('burger_userId');
+				dispatch(authSuccess(token, userId));
+				dispatch(checkAuthTimeout((expirationDate.getTime()-new Date().getTime())/1000));
+			}else{
+				alert('test123');
+				dispatch(logout());
+			}
+		}
 	};
 };
